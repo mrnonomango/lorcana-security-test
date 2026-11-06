@@ -1,0 +1,36 @@
+name: Sync staged controllers for device testing
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/sync-test-controllers.yml'
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout test repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Checkout staged controllers
+        uses: actions/checkout@v4
+        with:
+          repository: mrnonomango/loretracker
+          ref: firebase-security-staging-20261105
+          path: source-overlay
+          persist-credentials: false
+      - name: Copy controller HTML only
+        run: |
+          cp source-overlay/testphonecontroller.html .
+          cp source-overlay/newlorestaffcontroller.html .
+          cp source-overlay/newloreplayercontroller.html .
+          cp source-overlay/controller.html .
+          rm -rf source-overlay
+      - name: Commit copied files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add testphonecontroller.html newlorestaffcontroller.html newloreplayercontroller.html controller.html
+          git diff --cached --quiet || (git commit -m "Sync staged Firebase security controllers" && git push)
